@@ -1,7 +1,8 @@
 """
 Pipeline RAG para el Asistente Documental de Metro Bilbao.
-Combina recuperación vectorial (Embeddings + Cosine Similarity) con
+Combina recuperación vectorial (Embeddings BGE + Cosine Similarity) con
 generación condicionada por contexto (LLM Text2Text / Causal).
+Configurado exclusivamente para operar con modelos de la familia BGE (ej: BAAI/bge-m3).
 """
 
 import os
@@ -12,22 +13,30 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from transformers import pipeline
 
+MODELO_EMBEDDING_POR_DEFECTO = "BAAI/bge-m3"
+
 
 class MetroBilbaoRAG:
     def __init__(
         self,
-        embedding_model_name: str = "all-MiniLM-L6-v2",
+        embedding_model_name: str = MODELO_EMBEDDING_POR_DEFECTO,
         generation_model_name: str = "google/flan-t5-small",
         device: Optional[int] = None,
-        umbral_similitud_defecto: float = 0.40
+        umbral_similitud_defecto: float = 0.45
     ):
         """
         Inicializa el pipeline RAG.
-        :param embedding_model_name: Nombre o ruta del modelo de embeddings.
+        :param embedding_model_name: Nombre o ruta del modelo de embeddings (debe ser de la familia BGE).
         :param generation_model_name: Nombre o ruta del modelo generativo.
         :param device: Dispositivo para inferencia (0 para GPU cuda:0, -1 para CPU).
-        :param umbral_similitud_defecto: Puntuación mínima de similitud requerida.
+        :param umbral_similitud_defecto: Puntuación mínima de similitud requerida (0.45 calibrado para BGE).
         """
+        if "bge" not in embedding_model_name.lower():
+            raise ValueError(
+                f"Modelo no permitido: '{embedding_model_name}'. "
+                "Este proyecto está configurado para operar exclusivamente con la familia de modelos BGE (ej: 'BAAI/bge-m3')."
+            )
+
         self.embedding_model_name = embedding_model_name
         self.generation_model_name = generation_model_name
         self.umbral_similitud = umbral_similitud_defecto

@@ -10,9 +10,7 @@ Desarrollado para el módulo de **Modelos de Inteligencia Artificial** (Curso de
 
 - **Base Documental Real:** Ingesta y tratamiento semántico de la normativa oficial de Metro Bilbao en formato Markdown (`data/condiciones_generales_metro_bilbao.md`).
 - **Segmentación Semántica (Chunking por Artículos):** Conserva la integridad conceptual de los 28 artículos jurídicos enriquecidos con su sección correspondiente.
-- **Modelos de Embeddings Evaluados:**
-  - *Baseline:* `all-MiniLM-L6-v2` (384 dimensiones).
-  - *Mejora:* `BAAI/bge-m3` (1024 dimensiones, arquitectura multilingüe).
+- **Modelo de Embeddings Exclusivo:** `BAAI/bge-m3` (1024 dimensiones, arquitectura multilingüe de alta precisión). El proyecto está configurado para operar exclusivamente con la familia de modelos BGE, garantizando comprensión semántica nativa del español y rechazando modelos incompatibles.
 - **Modelos Generativos (LLM):** Inferencia condicionada por contexto con la familia `google/flan-t5` (`flan-t5-small` y `flan-t5-base`).
 - **Mecanismos de Guardia (Guardrails):** Filtro por umbral de similitud coseno ($\theta = 0.45$) para eliminar el 100% de alucinaciones en preguntas fuera de dominio.
 - **Trazabilidad de Fuentes:** Citas explícitas de artículos y secciones en cada respuesta.
@@ -28,7 +26,7 @@ flowchart TD
     subgraph INGESTION["1. Ingesta y Vectorización"]
         MD[" Condiciones Metro Bilbao (.md)"] --> SPLIT[" Chunking por Artículos (Arts. 3-30)"]
         SPLIT --> DOCS[" 28 Fragmentos Enriquecidos"]
-        DOCS --> EMB_M[" Embeddings (all-MiniLM / BGE-M3)"]
+        DOCS --> EMB_M[" Embeddings BGE (BAAI/bge-m3)"]
         EMB_M --> VDB[(" Matriz Vectorial en Memoria")]
     end
 
@@ -81,22 +79,21 @@ source /home/nicolas/Cursos/AI-BigData/02-modelos-ia/practicas/B3/.venv/bin/acti
 *(O en un entorno nuevo: `pip install transformers sentence-transformers scikit-learn pandas numpy matplotlib torch`)*
 
 ### 2. Ejecutar la Batería de Pruebas y Evaluación
-Para evaluar automáticamente las 7 preguntas canónicas (5 en dominio y 2 fuera de dominio):
+Para evaluar automáticamente las 7 preguntas canónicas (5 en dominio y 2 fuera de dominio) con el modelo BGE:
 
 ```bash
-# Con modelo base:
 python main.py --eval
-
-# Con modelo de embeddings multilingüe mejorado (BGE-M3):
-python main.py --eval --embedding BAAI/bge-m3
 ```
 
 ### 3. Ejecutar el Modo Chat Interactivo
 Para hacer preguntas libres en directo al asistente:
 
 ```bash
-python main.py --interactive --embedding BAAI/bge-m3
+python main.py --interactive
 ```
+
+> [!NOTE]
+> El proyecto está configurado para operar exclusivamente con la familia de modelos **BGE** (por defecto `BAAI/bge-m3`). Si se intenta especificar otro modelo mediante `--embedding`, la aplicación validará el parámetro y rechazará la ejecución para evitar degradación de rendimiento.
 
 ### 4. Abrir el Jupyter Notebook
 Para revisar la práctica paso a paso con gráficos explicativos:

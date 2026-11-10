@@ -32,6 +32,7 @@ def imprimir_encabezado():
     print("=" * 75)
     print("ASISTENTE DOCUMENTAL INTELIGENTE - METRO BILBAO (RAG)")
     print("Sistema RAG basado en las Condiciones Generales de Contratación")
+    print("Motor de Embeddings: BGE (BAAI/bge-m3)")
     print("=" * 75)
 
 
@@ -92,12 +93,23 @@ def ejecutar_pruebas(rag):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Asistente RAG de Metro Bilbao")
+    parser = argparse.ArgumentParser(description="Asistente RAG de Metro Bilbao (Exclusivo con modelo BGE)")
     parser.add_argument("--interactive", "-i", action="store_true", help="Iniciar en modo chat interactivo")
     parser.add_argument("--eval", "-e", action="store_true", help="Ejecutar evaluación automática de pruebas")
-    parser.add_argument("--embedding", default="all-MiniLM-L6-v2", help="Modelo de embeddings")
+    parser.add_argument(
+        "--embedding",
+        default="BAAI/bge-m3",
+        help="Modelo de embeddings BGE (por defecto: BAAI/bge-m3. Solo se permiten modelos de la familia BGE)"
+    )
     parser.add_argument("--generador", default="google/flan-t5-small", help="Modelo generativo")
     args = parser.parse_args()
+
+    # Validación estricta: el proyecto solo funciona con el modelo BGE
+    if "bge" not in args.embedding.lower():
+        parser.error(
+            f"El modelo de embeddings '{args.embedding}' no está permitido.\n"
+            f"Este proyecto está configurado para operar exclusivamente con la familia de modelos BGE (ej: 'BAAI/bge-m3')."
+        )
 
     imprimir_encabezado()
 
