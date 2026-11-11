@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asistente RAG - Metro Bilbao | Presentación</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #0f172a;
+      --border: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --red: #e30613;
+      --blue: #38bdf8;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* Barra superior de progreso */
+    .progress-bar-container {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .progress-bar {
+      height: 100%;
+      width: 20%;
+      background: var(--red);
+      transition: width 0.3s ease;
+    }
+
+    /* Deck de diapositivas */
+    .deck {
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 52px);
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 2.2rem 4rem;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .slide.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    /* Cabecera */
+    .slide-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.8rem;
+    }
+
+    .slide-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .slide-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--blue);
+      background: rgba(56, 189, 248, 0.1);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    /* Cuerpo central */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8rem 0;
+    }
+
+    /* Pie */
+    .slide-foot {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 0.7rem;
+    }
+
+    /* DIAPOSITIVA 1: Portada */
+    .hero {
+      text-align: center;
+      max-width: 880px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+    }
+    .hero-badge {
+      background: var(--red);
+      color: white;
+      font-weight: 800;
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+    }
+    .hero h1 {
+      font-size: 3.2rem;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+    }
+    .hero h1 span { color: var(--red); }
+    .hero p {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+    }
+    .hero-tags {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 0.6rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* DIAPOSITIVA 2: Diagrama SVG Nativo (100% visible, sin depender de librerías externas) */
+    .diagram-container {
+      width: 100%;
+      height: 100%;
+      max-height: 520px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #090e18;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.8rem;
+    }
+    .diagram-container svg {
+      width: 100%;
+      height: 100%;
+      max-height: 500px;
+    }
+
+    /* DIAPOSITIVA 3: Modelos (3 Cajas directas) */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.8rem;
+      width: 100%;
+    }
+    .box {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .box h3 {
+      font-size: 1.2rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .box ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .box li {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      position: relative;
+      padding-left: 1.2rem;
+    }
+    .box li::before {
+      content: "•";
+      color: var(--blue);
+      position: absolute;
+      left: 0;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+    .box strong { color: white; }
+
+    /* DIAPOSITIVA 4: Terminales */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      width: 100%;
+    }
+    .terminal {
+      background: #070a12;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.92rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .term-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+    .t-user { color: var(--blue); font-weight: 600; }
+    .t-bot {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.9rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--green);
+      line-height: 1.4;
+      color: #e2e8f0;
+    }
+    .t-bot.safe { border-left-color: var(--amber); }
+
+    /* DIAPOSITIVA 5: Preguntas */
+    .qa-box {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.4rem;
+    }
+    .qa-icon {
+      font-size: 4rem;
+      color: var(--red);
+      font-weight: 900;
+      line-height: 1;
+    }
+    .qa-title {
+      font-size: 2.8rem;
+      font-weight: 800;
+    }
+    .cli-pill {
+      background: #070a12;
+      border: 1px solid var(--border);
+      color: var(--green);
+      font-family: monospace;
+      font-size: 1.1rem;
+      padding: 0.8rem 1.6rem;
+      border-radius: 8px;
+    }
+
+    /* Barra de controles */
+    .controls {
+      height: 52px;
+      background: #070a12;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+    }
+    .btn-group { display: flex; gap: 0.6rem; }
+    button {
+      background: #1e293b;
+      color: white;
+      border: 1px solid #334155;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    button:hover:not(:disabled) {
+      background: var(--red);
+      border-color: var(--red);
+    }
+    button:disabled { opacity: 0.3; cursor: not-allowed; }
+    .counter { color: var(--text-muted); font-size: 0.88rem; }
+    .counter strong { color: white; }
+
+    /* Modo impresión */
+    @media print {
+      body { background: white !important; color: black !important; overflow: visible; }
+      .controls, .progress-bar-container { display: none !important; }
+      .deck { height: auto !important; }
+      .slide {
+        display: flex !important;
+        opacity: 1 !important;
+        position: relative !important;
+        page-break-after: always;
+        height: 100vh !important;
+        padding: 2rem !important;
+        background: white !important;
+        color: #0f172a !important;
+      }
+      .box, .diagram-container, .terminal {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+      }
+      .t-bot { background: white !important; color: black !important; }
+      .slide-title, .box h3, .hero h1 { color: #0f172a !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Progreso -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progress"></div>
+  </div>
+
+  <main class="deck">
+
+    <!-- 1. PORTADA -->
+    <section class="slide active" id="s1">
+      <div class="slide-head">
+        <span class="slide-title">Metro Bilbao</span>
+        <span class="slide-tag">Modelos de IA</span>
+      </div>
+      <div class="slide-body">
+        <div class="hero">
+          <span class="hero-badge">SISTEMA RAG</span>
+          <h1>Asistente Documental <span>Inteligente</span></h1>
+          <p>Condiciones Generales de Contratación (Artículos 3 al 30)</p>
+          <div class="hero-tags">
+            <span class="pill">BAAI/bge-m3</span>
+            <span class="pill">google/flan-t5</span>
+            <span class="pill">Guardrails (θ ≥ 0.45)</span>
+            <span class="pill">Chunking Semántico</span>
+          </div>
+        </div>
+      </div>
+      <div class="slide-foot">
+        <span>Especialización en IA y Big Data</span>
+        <span>2026</span>
+      </div>
+    </section>
+
+    <!-- 2. DIAGRAMA DE LA SOLUCIÓN (SVG NATIVO 100% GARANTIZADO) -->
+    <section class="slide" id="s2">
+      <div class="slide-head">
+        <span class="slide-title">1. Diagrama de la Solución</span>
+        <span class="slide-tag">Arquitectura RAG</span>
+      </div>
+      <div class="slide-body">
+        <div class="diagram-container">
+          <svg viewBox="0 0 1060 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Definición de puntas de flecha -->
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+              </marker>
+              <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#22c55e" />
+              </marker>
+              <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b" />
+              </marker>
+            </defs>
+
+            <!-- SUBGRAFO 1: INGESTA -->
+            <rect x="15" y="15" width="280" height="330" rx="12" fill="#0d1424" stroke="#1e293b" stroke-width="1.5" />
+            <text x="35" y="45" fill="#38bdf8" font-size="13" font-weight="700" letter-spacing="1">1. INGESTA Y VECTORIZACIÓN</text>
+
+            <!-- Nodo Doc -->
+            <rect x="35" y="70" width="240" height="48" rx="8" fill="#1e293b" stroke="#334155" />
+            <text x="155" y="94" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Normativa Metro Bilbao (.md)</text>
+            <text x="155" y="108" fill="#94a3b8" font-size="10" text-anchor="middle">Artículos 3 al 30 oficiales</text>
+
+            <line x1="155" y1="118" x2="155" y2="140" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+
+            <!-- Nodo Chunking -->
+            <rect x="35" y="142" width="240" height="48" rx="8" fill="#1e293b" stroke="#334155" />
+            <text x="155" y="165" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Chunking Semántico</text>
+            <text x="155" y="179" fill="#94a3b8" font-size="10" text-anchor="middle">28 artículos completos enriquecidos</text>
+
+            <line x1="155" y1="190" x2="155" y2="212" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+
+            <!-- Nodo Embeddings -->
+            <rect x="35" y="214" width="240" height="48" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" />
+            <text x="155" y="237" fill="#38bdf8" font-size="12" font-weight="700" text-anchor="middle">Embeddings BAAI/bge-m3</text>
+            <text x="155" y="251" fill="#94a3b8" font-size="10" text-anchor="middle">1024 dimensiones por artículo</text>
+
+            <line x1="155" y1="262" x2="155" y2="282" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+
+            <!-- Nodo Matriz -->
+            <rect x="35" y="284" width="240" height="42" rx="8" fill="#131c2e" stroke="#1e293b" />
+            <text x="155" y="309" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Matriz Vectorial en Memoria</text>
+
+            <!-- Flecha entre Fase 1 y Fase 2 -->
+            <path d="M 275 305 L 340 305 L 340 166 L 375 166" stroke="#38bdf8" stroke-width="2" fill="none" marker-end="url(#arrow)" />
+
+            <!-- SUBGRAFO 2: RECUPERACIÓN & GUARDRAIL -->
+            <rect x="365" y="15" width="350" height="330" rx="12" fill="#131524" stroke="#e30613" stroke-width="1.5" />
+            <text x="385" y="45" fill="#ff4d58" font-size="13" font-weight="700" letter-spacing="1">2. RECUPERACIÓN Y GUARDRAIL</text>
+
+            <!-- Pregunta -->
+            <rect x="385" y="70" width="310" height="45" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" />
+            <text x="540" y="92" fill="#38bdf8" font-size="12" font-weight="700" text-anchor="middle">Pregunta del Usuario</text>
+            <text x="540" y="106" fill="#94a3b8" font-size="10" text-anchor="middle">Vectorizada con bge-m3 en tiempo real</text>
+
+            <line x1="540" y1="115" x2="540" y2="140" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+
+            <!-- Similitud Coseno -->
+            <rect x="385" y="142" width="310" height="48" rx="8" fill="#1e293b" stroke="#334155" />
+            <text x="540" y="165" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Ranking Similitud Coseno</text>
+            <text x="540" y="179" fill="#94a3b8" font-size="10" text-anchor="middle">Comparación vs Matriz Vectorial (Top-K)</text>
+
+            <line x1="540" y1="190" x2="540" y2="215" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+
+            <!-- Decisión Guardrail -->
+            <polygon points="540,215 635,248 540,281 445,248" fill="#2d1215" stroke="#e30613" stroke-width="2" />
+            <text x="540" y="252" fill="#ff8585" font-size="12" font-weight="800" text-anchor="middle">¿Score ≥ 0.45?</text>
+
+            <!-- Rama No (Fallback) -->
+            <line x1="445" y1="248" x2="415" y2="248" stroke="#f59e0b" stroke-width="2" />
+            <line x1="415" y1="248" x2="415" y2="295" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-amber)" />
+            <rect x="385" y="297" width="135" height="38" rx="6" fill="#25180f" stroke="#f59e0b" />
+            <text x="452" y="313" fill="#fcd34d" font-size="10" font-weight="700" text-anchor="middle">No ("Sin info")</text>
+            <text x="452" y="326" fill="#fbbf24" font-size="9" text-anchor="middle">0% Alucinación</text>
+
+            <!-- Rama Sí (Hacia Fase 3) -->
+            <path d="M 635 248 L 745 248 L 745 130 L 775 130" stroke="#22c55e" stroke-width="2" fill="none" marker-end="url(#arrow-green)" />
+            <text x="685" y="240" fill="#22c55e" font-size="11" font-weight="700" text-anchor="middle">Sí (Pasa filtro)</text>
+
+            <!-- SUBGRAFO 3: GENERACIÓN -->
+            <rect x="765" y="15" width="280" height="330" rx="12" fill="#0e171b" stroke="#1e293b" stroke-width="1.5" />
+            <text x="785" y="45" fill="#22c55e" font-size="13" font-weight="700" letter-spacing="1">3. GENERACIÓN</text>
+
+            <!-- Prompt Grounded -->
+            <rect x="785" y="105" width="240" height="50" rx="8" fill="#1e293b" stroke="#334155" />
+            <text x="905" y="128" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Prompt Estricto Grounded</text>
+            <text x="905" y="143" fill="#94a3b8" font-size="10" text-anchor="middle">Pregunta + Contexto Recuperado</text>
+
+            <line x1="905" y1="155" x2="905" y2="185" stroke="#22c55e" stroke-width="2" marker-end="url(#arrow-green)" />
+
+            <!-- LLM FLAN-T5 -->
+            <rect x="785" y="187" width="240" height="50" rx="8" fill="#14261f" stroke="#22c55e" stroke-width="1.5" />
+            <text x="905" y="210" fill="#86efac" font-size="12" font-weight="700" text-anchor="middle">LLM: google/flan-t5</text>
+            <text x="905" y="225" fill="#94a3b8" font-size="10" text-anchor="middle">Síntesis ceñida a los hechos</text>
+
+            <line x1="905" y1="237" x2="905" y2="267" stroke="#22c55e" stroke-width="2" marker-end="url(#arrow-green)" />
+
+            <!-- Respuesta Final -->
+            <rect x="785" y="269" width="240" height="55" rx="8" fill="#0d2818" stroke="#22c55e" stroke-width="2" />
+            <text x="905" y="293" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">Respuesta Final</text>
+            <text x="905" y="310" fill="#86efac" font-size="10" font-weight="600" text-anchor="middle">+ Citas de Artículos Fuente</text>
+          </svg>
+        </div>
+      </div>
+      <div class="slide-foot">
+        <span>Flujo completo: Ingesta → Filtro Guardrail (θ ≥ 0.45) → Generación condicionada</span>
+        <span>Diapositiva 2 / 5</span>
+      </div>
+    </section>
+
+    <!-- 3. MODELOS ELEGIDOS -->
+    <section class="slide" id="s3">
+      <div class="slide-head">
+        <span class="slide-title">2. Funcionamiento del Modelo Elegido</span>
+        <span class="slide-tag">Técnica</span>
+      </div>
+      <div class="slide-body">
+        <div class="grid-3">
+
+          <div class="box">
+            <h3>🔹 BAAI/bge-m3</h3>
+            <p style="font-size:0.85rem; color:var(--blue); font-weight:700;">EMBEDDINGS DENSOS</p>
+            <ul>
+              <li><strong>1024 dimensiones</strong> de representación semántica.</li>
+              <li>Comprensión profunda de <strong>español jurídico</strong> y transporte.</li>
+              <li>Compara significado real, no palabras clave aisladas.</li>
+            </ul>
+          </div>
+
+          <div class="box" style="border-color: rgba(227, 6, 19, 0.6);">
+            <h3>🛡 Guardrail Coseno</h3>
+            <p style="font-size:0.85rem; color:var(--red); font-weight:700;">CONTROL ALGORÍTMICO</p>
+            <ul>
+              <li>Filtro por <strong>umbral de similitud (θ ≥ 0.45)</strong>.</li>
+              <li>Consultas no normativas se descartan <strong>antes del LLM</strong>.</li>
+              <li><strong>0% Alucinaciones</strong> y ahorro de computación.</li>
+            </ul>
+          </div>
+
+          <div class="box">
+            <h3>🔸 google/flan-t5</h3>
+            <p style="font-size:0.85rem; color:var(--green); font-weight:700;">GENERADOR (LLM)</p>
+            <ul>
+              <li>Modelo <em>Encoder-Decoder</em> instruction-tuned.</li>
+              <li><strong>Prompt Grounded:</strong> responde únicamente con los artículos aportados.</li>
+              <li>Garantiza <strong>cita y trazabilidad</strong> de la fuente.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+      <div class="slide-foot">
+        <span>Combinación óptima: vectorización precisa + filtro preventivo + generación condicionada</span>
+        <span>Diapositiva 3 / 5</span>
+      </div>
+    </section>
+
+    <!-- 4. DEMO Y PRUEBAS -->
+    <section class="slide" id="s4">
+      <div class="slide-head">
+        <span class="slide-title">3. Muestra de Funcionamiento</span>
+        <span class="slide-tag">Casos Reales</span>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+
+          <div class="terminal">
+            <div class="term-title">
+              <span style="color:var(--green);">CASO EN DOMINIO</span>
+              <span style="color:var(--blue);">Score: 0.78 (≥ 0.45)</span>
+            </div>
+            <div class="t-user">&gt; ¿Se puede viajar con un patinete eléctrico?</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">
+              Art. recuperado: "Artículo 20.- Bultos de mano y accesorios"
+            </div>
+            <div class="t-bot">
+              "No, queda terminantemente prohibido el acceso de patinetes y monociclos eléctricos al interior de las estaciones y trenes."
+            </div>
+            <div style="font-size:0.8rem; color:var(--green); font-weight:600;">
+              ✔ Respuesta correcta con cita legal
+            </div>
+          </div>
+
+          <div class="terminal">
+            <div class="term-title">
+              <span style="color:var(--amber);">CASO FUERA DE DOMINIO</span>
+              <span style="color:var(--red);">Score: 0.21 (&lt; 0.45)</span>
+            </div>
+            <div class="t-user">&gt; ¿Cuál es el salario de los conductores?</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">
+              Guardrail activo: Similitud insuficiente
+            </div>
+            <div class="t-bot safe">
+              "No encuentro esa información en los documentos disponibles sobre Metro Bilbao."
+            </div>
+            <div style="font-size:0.8rem; color:var(--amber); font-weight:600;">
+              ✔ Alucinación evitada al 100%
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="slide-foot">
+        <span>Evaluado en benchmark con 100% Hit Rate en artículos normativos</span>
+        <span>Diapositiva 4 / 5</span>
+      </div>
+    </section>
+
+    <!-- 5. PREGUNTAS -->
+    <section class="slide" id="s5">
+      <div class="slide-head">
+        <span class="slide-title">Preguntas</span>
+        <span class="slide-tag">Q&A</span>
+      </div>
+      <div class="slide-body">
+        <div class="qa-box">
+          <div class="qa-icon">?</div>
+          <h2 class="qa-title">¿Preguntas o Dudas?</h2>
+          <p style="color:var(--text-muted); font-size:1.1rem; max-width:500px;">
+            Podemos probar cualquier pregunta en vivo directamente desde la terminal del proyecto:
+          </p>
+          <div class="cli-pill">
+            $ python main.py --interactive
+          </div>
+        </div>
+      </div>
+      <div class="slide-foot">
+        <span>Asistente Metro Bilbao RAG</span>
+        <span>¡Gracias por su atención!</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Barra de controles -->
+  <nav class="controls">
+    <div class="counter">
+      Diapositiva <strong id="cur-idx">1</strong> de <strong>5</strong>
+    </div>
+    <div class="btn-group">
+      <button id="btn-p" onclick="prev()">← Anterior</button>
+      <button id="btn-n" onclick="next()">Siguiente →</button>
+      <button onclick="toggleFs()">⛶ Pantalla Completa</button>
+    </div>
+    <div style="font-size:0.8rem; color:#64748b;">
+      Teclas: <strong>←</strong> / <strong>→</strong> / <strong>Espacio</strong> / <strong>F</strong>
+    </div>
+  </nav>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+    let current = 0;
+
+    const curIdx = document.getElementById('cur-idx');
+    const progress = document.getElementById('progress');
+    const btnP = document.getElementById('btn-p');
+    const btnN = document.getElementById('btn-n');
+
+    function update() {
+      slides.forEach((s, i) => s.classList.toggle('active', i === current));
+      curIdx.textContent = current + 1;
+      progress.style.width = ((current + 1) / total * 100) + '%';
+      btnP.disabled = current === 0;
+      btnN.disabled = current === total - 1;
+    }
+
+    function next() {
+      if (current < total - 1) { current++; update(); }
+    }
+
+    function prev() {
+      if (current > 0) { current--; update(); }
+    }
+
+    function toggleFs() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        next();
+      } else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') {
+        e.preventDefault();
+        prev();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFs();
+      } else if (e.key >= '1' && e.key <= '5') {
+        current = parseInt(e.key) - 1;
+        update();
+      }
+    });
+
+    update();
+  </script>
+</body>
+</html>

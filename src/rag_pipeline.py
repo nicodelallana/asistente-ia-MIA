@@ -129,18 +129,18 @@ class MetroBilbaoRAG:
         """
         prompt = f"""Responde a la pregunta utilizando únicamente la información del contexto.
 
-Si el contexto no contiene la respuesta, indica exactamente:
-"No encuentro esa información en los documentos disponibles."
+        Si el contexto no contiene la respuesta, indica exactamente:
+        "No encuentro esa información en los documentos disponibles."
 
-No inventes datos ni añadas información externa.
+        No inventes datos ni añadas información externa.
 
-CONTEXTO:
-{contexto}
+        CONTEXTO:
+        {contexto}
 
-PREGUNTA:
-{pregunta}
+        PREGUNTA:
+        {pregunta}
 
-RESPUESTA:"""
+        RESPUESTA:"""
 
         salida = self.generador(
             prompt,
