@@ -11,7 +11,7 @@ Desarrollado para el módulo de **Modelos de Inteligencia Artificial** (Curso de
 - **Base Documental Real:** Ingesta y tratamiento semántico de la normativa oficial de Metro Bilbao en formato Markdown (`data/condiciones_generales_metro_bilbao.md`).
 - **Segmentación Semántica (Chunking por Artículos):** Conserva la integridad conceptual de los 28 artículos jurídicos enriquecidos con su sección correspondiente.
 - **Modelo de Embeddings Exclusivo:** `BAAI/bge-m3` (1024 dimensiones, arquitectura multilingüe de alta precisión). El proyecto está configurado para operar exclusivamente con la familia de modelos BGE, garantizando comprensión semántica nativa del español y rechazando modelos incompatibles.
-- **Modelos Generativos (LLM):** Inferencia condicionada por contexto con la familia `google/flan-t5` (`flan-t5-small` y `flan-t5-base`).
+- **Modelos Generativos (LLM):** Generación condicionada por contexto mediante **Qwen 2.5 Instruct** (`Qwen/Qwen2.5-3B-Instruct` / `Qwen/Qwen2.5-1.5B-Instruct`), con compatibilidad retrospectiva automática para modelos Seq2Seq como `google/flan-t5`.
 - **Mecanismos de Guardia (Guardrails):** Filtro por umbral de similitud coseno ($\theta = 0.45$) para eliminar el 100% de alucinaciones en preguntas fuera de dominio.
 - **Trazabilidad de Fuentes:** Citas explícitas de artículos y secciones en cada respuesta.
 - **Doble Modalidad de Ejecución:** Notebook interactivo de Jupyter (`asistente_metro_bilbao_RAG.ipynb`) y CLI ejecutable por consola (`main.py`).
@@ -40,7 +40,7 @@ flowchart TD
 
     subgraph GENERATION["3. Generación Condicionada"]
         CTX & USER_Q --> PROMPT[" Prompt Estricto Grounded"]
-        PROMPT --> LLM[" Generador LLM (FLAN-T5)"]
+        PROMPT --> LLM[" Generador LLM (Qwen 2.5 Instruct)"]
         LLM --> ANSWER[" Respuesta Final + Citas de Artículos"]
     end
 ```

@@ -14,20 +14,21 @@ from sklearn.metrics.pairwise import cosine_similarity
 from transformers import pipeline
 
 MODELO_EMBEDDING_POR_DEFECTO = "BAAI/bge-m3"
+MODELO_GENERACION_POR_DEFECTO = "Qwen/Qwen2.5-3B-Instruct"
 
 
 class MetroBilbaoRAG:
     def __init__(
         self,
         embedding_model_name: str = MODELO_EMBEDDING_POR_DEFECTO,
-        generation_model_name: str = "google/flan-t5-small",
+        generation_model_name: str = MODELO_GENERACION_POR_DEFECTO,
         device: Optional[int] = None,
         umbral_similitud_defecto: float = 0.45
     ):
         """
         Inicializa el pipeline RAG.
         :param embedding_model_name: Nombre o ruta del modelo de embeddings (debe ser de la familia BGE).
-        :param generation_model_name: Nombre o ruta del modelo generativo.
+        :param generation_model_name: Nombre o ruta del modelo generativo (Qwen2.5, Flan-T5, etc.).
         :param device: Dispositivo para inferencia (0 para GPU cuda:0, -1 para CPU).
         :param umbral_similitud_defecto: Puntuación mínima de similitud requerida (0.45 calibrado para BGE).
         """
@@ -46,15 +47,23 @@ class MetroBilbaoRAG:
         else:
             self.device = device
 
+        # Detección automática del tipo de arquitectura (Seq2Seq vs Causal LM)
+        self.es_seq2seq = any(k in generation_model_name.lower() for k in ["t5", "bart", "marian"])
+        tarea = "text2text-generation" if self.es_seq2seq else "text-generation"
+
         print(f"[RAG] Cargando modelo de embeddings: {embedding_model_name}...")
         self.modelo_embeddings = SentenceTransformer(embedding_model_name)
 
-        print(f"[RAG] Cargando generador LLM: {generation_model_name} en dispositivo {self.device}...")
-        self.generador = pipeline(
-            task="text2text-generation",
-            model=generation_model_name,
-            device=self.device
-        )
+        print(f"[RAG] Cargando generador LLM ({tarea}): {generation_model_name} en dispositivo {self.device}...")
+        pipeline_kwargs = {
+            "task": tarea,
+            "model": generation_model_name,
+            "device": self.device
+        }
+        if not self.es_seq2seq and self.device >= 0:
+            pipeline_kwargs["dtype"] = torch.float16
+
+        self.generador = pipeline(**pipeline_kwargs)
 
         self.documentos: List[Dict[str, Any]] = []
         self.embeddings_documentos: Optional[np.ndarray] = None
@@ -107,17 +116,21 @@ class MetroBilbaoRAG:
 
         return resultados
 
-    def construir_contexto(self, resultados: List[Dict[str, Any]], max_chars_por_doc: int = 450) -> str:
+    def construir_contexto(self, resultados: List[Dict[str, Any]], max_chars_por_doc: Optional[int] = None) -> str:
         """
         Ensambla los fragmentos recuperados en un contexto estructurado con citas de fuentes,
-        acotando la longitud de cada fragmento para respetar la ventana de contexto del LLM.
+        acotando la longitud según la capacidad del LLM (T5 vs Causal LM).
         """
+        if max_chars_por_doc is None:
+            # Seq2Seq (Flan-T5) requiere contexto acotado (512 tokens); CausalLM (Qwen/Llama) soporta 32k+
+            max_chars_por_doc = 450 if self.es_seq2seq else 1500
+
         partes = []
         for i, res in enumerate(resultados, 1):
             doc = res["documento"]
             encabezado = f"[Fuente {i}: {doc.get('seccion', '')} - {doc.get('articulo', '')}]"
             texto_doc = doc["texto"]
-            if len(texto_doc) > max_chars_por_doc:
+            if max_chars_por_doc > 0 and len(texto_doc) > max_chars_por_doc:
                 texto_doc = texto_doc[:max_chars_por_doc] + "..."
             partes.append(f"{encabezado}\n{texto_doc}")
 
@@ -126,29 +139,57 @@ class MetroBilbaoRAG:
     def generar_respuesta(self, pregunta: str, contexto: str) -> str:
         """
         Envía la pregunta y el contexto estructurado al LLM con un prompt acotado.
+        Soporta modo legacy Seq2Seq y modo chat template nativo para Causal LLMs.
         """
-        prompt = f"""Responde a la pregunta utilizando únicamente la información del contexto.
+        if self.es_seq2seq:
+            prompt = f"""Responde a la pregunta utilizando únicamente la información del contexto.
 
-        Si el contexto no contiene la respuesta, indica exactamente:
-        "No encuentro esa información en los documentos disponibles."
+Si el contexto no contiene la respuesta, indica exactamente:
+"No encuentro esa información en los documentos disponibles."
 
-        No inventes datos ni añadas información externa.
+No inventes datos ni añadas información externa.
 
-        CONTEXTO:
-        {contexto}
+CONTEXTO:
+{contexto}
 
-        PREGUNTA:
-        {pregunta}
+PREGUNTA:
+{pregunta}
 
-        RESPUESTA:"""
+RESPUESTA:"""
 
-        salida = self.generador(
-            prompt,
-            max_new_tokens=120,
-            do_sample=False
-        )
+            salida = self.generador(
+                prompt,
+                max_new_tokens=120,
+                do_sample=False
+            )
+            return salida[0]["generated_text"].strip()
+        else:
+            mensajes = [
+                {
+                    "role": "system",
+                    "content": (
+                        "Eres el asistente oficial de Metro Bilbao. Tu misión es resolver las dudas de las personas usuarias sobre la normativa.\n"
+                        "Apóyate exclusivamente en el contexto proporcionado para responder de manera clara, concisa y directa.\n"
+                        "Si el contexto no contiene información sobre el tema o trata sobre algo ajeno, responde exactamente: "
+                        "'No encuentro esa información en los documentos disponibles.'\n"
+                        "No inventes datos ni asumas normas que no se mencionen."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"CONTEXTO:\n{contexto}\n\nPREGUNTA:\n{pregunta}"
+                }
+            ]
 
-        return salida[0]["generated_text"].strip()
+            salida = self.generador(
+                mensajes,
+                max_new_tokens=150,
+                do_sample=False
+            )
+            texto = salida[0]["generated_text"]
+            if isinstance(texto, list):
+                return texto[-1]["content"].strip()
+            return str(texto).strip()
 
     def consultar(
         self,

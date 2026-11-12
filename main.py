@@ -101,7 +101,11 @@ def main():
         default="BAAI/bge-m3",
         help="Modelo de embeddings BGE (por defecto: BAAI/bge-m3. Solo se permiten modelos de la familia BGE)"
     )
-    parser.add_argument("--generador", default="google/flan-t5-small", help="Modelo generativo")
+    parser.add_argument(
+        "--generador",
+        default="Qwen/Qwen2.5-3B-Instruct",
+        help="Modelo generativo LLM (por defecto: Qwen/Qwen2.5-3B-Instruct. Compatible con Qwen2.5, Flan-T5, Llama, etc.)"
+    )
     args = parser.parse_args()
 
     # Validación estricta: el proyecto solo funciona con el modelo BGE
