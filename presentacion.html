@@ -559,7 +559,7 @@
           <div class="terminal">
             <div class="term-title">
               <span style="color:var(--green);">CASO EN DOMINIO</span>
-              <span style="color:var(--blue);">Score: 0.78 (≥ 0.45)</span>
+              <span style="color:var(--blue);">Score: 0.63 (≥ 0.45)</span>
             </div>
             <div class="t-user">&gt; ¿Se puede viajar con un patinete eléctrico?</div>
             <div style="font-size:0.8rem; color:var(--text-muted);">
@@ -576,17 +576,17 @@
           <div class="terminal">
             <div class="term-title">
               <span style="color:var(--amber);">CASO FUERA DE DOMINIO</span>
-              <span style="color:var(--red);">Score: 0.21 (&lt; 0.45)</span>
+              <span style="color:var(--amber);">Score: 0.47 (≥ 0.45)</span>
             </div>
             <div class="t-user">&gt; ¿Cuál es el salario de los conductores?</div>
             <div style="font-size:0.8rem; color:var(--text-muted);">
-              Guardrail activo: Similitud insuficiente
+              Guardrail NO activado (supera 0.45) → la pregunta llega al LLM
             </div>
             <div class="t-bot safe">
-              "No encuentro esa información en los documentos disponibles sobre Metro Bilbao."
+              "No encuentro esa información en los documentos disponibles."
             </div>
             <div style="font-size:0.8rem; color:var(--amber); font-weight:600;">
-              ✔ Alucinación evitada al 100%
+              ✔ Abstención por Prompt Grounded (Qwen 2.5)
             </div>
           </div>
 
